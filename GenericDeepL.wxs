@@ -2,10 +2,13 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <!-- ProductCode はバージョンごとに固定する。新バージョンをリリースする際は
+       Version と ProductCode を両方変更すること（MajorUpgrade が旧版を自動削除する）。 -->
   <Package Name="GenericDeepL"
            Language="1033"
            Codepage="65001"
            Version="1.0.0.0"
+           ProductCode="c4d5e6f7-a8b9-4012-cdef-012345678901"
            Manufacturer="GenericDeepL"
            UpgradeCode="a1b2c3d4-e5f6-7890-abcd-ef1234567890"
            InstallerVersion="200"
