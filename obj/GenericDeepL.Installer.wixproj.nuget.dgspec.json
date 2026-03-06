@@ -1,0 +1,51 @@
+{
+  "format": 1,
+  "restore": {
+    "D:\\others\\GenericDeepL\\GenericDeepL.Installer.wixproj": {}
+  },
+  "projects": {
+    "D:\\others\\GenericDeepL\\GenericDeepL.Installer.wixproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\others\\GenericDeepL\\GenericDeepL.Installer.wixproj",
+        "projectName": "GenericDeepL",
+        "projectPath": "D:\\others\\GenericDeepL\\GenericDeepL.Installer.wixproj",
+        "packagesPath": "C:\\Users\\heatf\\.nuget\\packages\\",
+        "outputPath": "D:\\others\\GenericDeepL\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\heatf\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "native"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "native": {
+            "targetAlias": "native",
+            "projectReferences": {}
+          }
+        }
+      },
+      "frameworks": {
+        "native": {
+          "targetAlias": "native",
+          "dependencies": {
+            "WixToolset.UI.wixext": {
+              "target": "Package",
+              "version": "[6.*, )"
+            },
+            "WixToolset.Util.wixext": {
+              "target": "Package",
+              "version": "[6.*, )"
+            }
+          }
+        }
+      }
+    }
+  }
+}

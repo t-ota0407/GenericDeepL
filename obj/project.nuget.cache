@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "o2//m6A6MAdAbYZy+PBTaXTo/KeZI4F3/EXTNSnttZV8qp9b4dSBsuy078J19UxcaD1Nn73FtlSlJDqn7dgwsQ==",
+  "success": true,
+  "projectFilePath": "d:\\others\\GenericDeepL\\GenericDeepL.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\heatf\\.nuget\\packages\\hardcodet.notifyicon.wpf\\1.1.0\\hardcodet.notifyicon.wpf.1.1.0.nupkg.sha512",
+    "C:\\Users\\heatf\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
+    "C:\\Users\\heatf\\.nuget\\packages\\system.security.cryptography.protecteddata\\6.0.0\\system.security.cryptography.protecteddata.6.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

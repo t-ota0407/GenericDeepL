@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="WixToolset.Sdk/6.0.2">
+  <PropertyGroup>
+    <OutputName>GenericDeepL</OutputName>
+    <AppBinPath Condition=" '$(AppBinPath)' == '' ">$(ProjectDir)..\bin\$(Configuration)\net6.0-windows\</AppBinPath>
+    <!-- Pass AppBinPath to WiX preprocessor so $(var.AppBinPath) works in .wxs -->
+    <DefineConstants>AppBinPath=$(AppBinPath)</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Util.wixext" Version="6.*" />
+    <PackageReference Include="WixToolset.UI.wixext" Version="6.*" />
+    </ItemGroup>
+  <ItemGroup>
+    <Content Include="license.rtf" />
+  </ItemGroup>
+</Project>

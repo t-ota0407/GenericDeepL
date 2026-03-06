@@ -1,0 +1,6 @@
+D:\others\GenericDeepL\bin\Release\GenericDeepL.msi
+D:\others\GenericDeepL\bin\Release\GenericDeepL.wixpdb
+D:\others\GenericDeepL\obj\Release\GenericDeepL.Installer.wixproj.CoreCompileInputs.cache
+D:\others\GenericDeepL\obj\Release\GenericDeepL.msi
+D:\others\GenericDeepL\obj\Release\GenericDeepL.wixpdb
+D:\others\GenericDeepL\obj\Release\GenericDeepL.Installer.wixproj.BindTracking-neutral.txt
