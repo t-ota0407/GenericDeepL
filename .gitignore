@@ -1,2 +1,10 @@
 # APIキーを含むためリポジトリに含めない
 .env
+
+# ビルド成果物
+bin/
+obj/
+
+# Visual Studio のローカル設定
+.vs/
+*.user

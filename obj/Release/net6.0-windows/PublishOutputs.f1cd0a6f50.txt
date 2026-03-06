@@ -1,8 +1,0 @@
-D:\others\GenericDeepL\bin\Release\net6.0-windows\GenericDeepL.exe
-D:\others\GenericDeepL\bin\Release\net6.0-windows\region-models.json
-D:\others\GenericDeepL\bin\Release\net6.0-windows\GenericDeepL.dll
-D:\others\GenericDeepL\bin\Release\net6.0-windows\GenericDeepL.deps.json
-D:\others\GenericDeepL\bin\Release\net6.0-windows\GenericDeepL.runtimeconfig.json
-D:\others\GenericDeepL\bin\Release\net6.0-windows\GenericDeepL.pdb
-D:\others\GenericDeepL\bin\Release\net6.0-windows\Hardcodet.NotifyIcon.Wpf.dll
-D:\others\GenericDeepL\bin\Release\net6.0-windows\Newtonsoft.Json.dll

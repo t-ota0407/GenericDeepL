@@ -1,7 +1,0 @@
-{
-  "defaultRegion": "us-central1",
-  "defaultModel": "gemini-2.5-flash-lite",
-  "asia-northeast1": ["gemini-2.5-flash", "gemini-2.5-pro"],
-  "us-central1": ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro"],
-  "europe-west9": ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro"]
-}
