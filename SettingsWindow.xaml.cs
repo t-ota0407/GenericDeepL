@@ -48,11 +48,8 @@ namespace GenericDeepL
         {
             _settings.GoogleApiKey = ApiKeyPasswordBox.Password;
             
-            // 選択されたモデルを取得
-            if (ModelComboBox.SelectedItem is System.Windows.Controls.ComboBoxItem selectedModelItem)
-            {
-                _settings.ModelName = selectedModelItem.Content.ToString();
-            }
+            // 選択または入力されたモデルを取得
+            _settings.ModelName = ModelComboBox.Text?.Trim() ?? "";
             
             // 選択されたリージョンを取得
             if (RegionComboBox.SelectedItem is System.Windows.Controls.ComboBoxItem selectedRegionItem)
@@ -134,23 +131,20 @@ namespace GenericDeepL
 
             RegionComboBox.SelectionChanged += RegionComboBox_SelectionChanged;
             RefreshModelsForSelectedRegion();
-            foreach (System.Windows.Controls.ComboBoxItem item in ModelComboBox.Items)
-            {
-                if (item.Content?.ToString() == _settings.ModelName)
-                {
-                    item.IsSelected = true;
-                    break;
-                }
-            }
+            ModelComboBox.Text = _settings.ModelName;
         }
 
         private static string GetRegionDisplayName(string regionId)
         {
             return regionId switch
             {
+                "global"         => "global (グローバル)",
+                "us-central1"    => "us-central1 (アイオワ)",
+                "us-east5"       => "us-east5 (コロンバス)",
                 "asia-northeast1" => "asia-northeast1 (東京)",
-                "us-central1" => "us-central1 (アイオワ)",
-                "europe-west9" => "europe-west9 (パリ)",
+                "asia-southeast1" => "asia-southeast1 (シンガポール)",
+                "europe-west4"   => "europe-west4 (オランダ)",
+                "europe-west9"   => "europe-west9 (パリ)",
                 _ => regionId
             };
         }
@@ -170,20 +164,17 @@ namespace GenericDeepL
         private void RefreshModelsForSelectedRegion()
         {
             string region = GetSelectedRegion();
-            string previouslySelected = ModelComboBox.SelectedItem is ComboBoxItem prev ? prev.Content?.ToString() : null;
+            string previouslySelected = ModelComboBox.Text;
             string[] models = TranslationService.GetModelsForRegion(region);
 
             ModelComboBox.Items.Clear();
-            int selectIndex = 0;
-            for (int i = 0; i < models.Length; i++)
-            {
-                var item = new ComboBoxItem { Content = models[i] };
-                ModelComboBox.Items.Add(item);
-                if (models[i] == previouslySelected)
-                    selectIndex = i;
-            }
-            if (ModelComboBox.Items.Count > 0)
-                ModelComboBox.SelectedIndex = selectIndex;
+            foreach (var model in models)
+                ModelComboBox.Items.Add(model);
+
+            ModelComboBox.Text = !string.IsNullOrEmpty(previouslySelected)
+                ? previouslySelected
+                : (models.Length > 0 ? models[0] : "");
         }
+
     }
 }

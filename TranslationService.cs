@@ -120,21 +120,6 @@ namespace GenericDeepL
             }
         }
 
-        public async Task<string> GetAvailableModelsAsync()
-        {
-            // Vertex AIではモデルリスト取得APIが異なるため、
-            // 一般的に利用可能なモデルリストを返す
-            return "Vertex AIで利用可能なモデル:\n" +
-                   "- gemini-2.5-flash-lite\n" +
-                   "- gemini-2.5-flash\n" +
-                   "- gemini-2.5-pro\n" +
-                   "- gemini-2.0-flash\n" +
-                   "- gemini-2.0-flash-lite\n" +
-                   "- gemini-1.5-flash\n" +
-                   "- gemini-1.5-pro\n" +
-                   "- gemini-pro";
-        }
-
         public async Task<string> TranslateAsync(string text)
         {
             if (string.IsNullOrWhiteSpace(_settings.GoogleApiKey))
@@ -170,9 +155,11 @@ namespace GenericDeepL
                 }
                 
                 // Vertex AI APIのエンドポイント（設定されたリージョンを使用）
-                // ストリーミングAPIは実装が複雑なため、まず通常版で動作確認
-                string region = string.IsNullOrWhiteSpace(_settings.Region) ? "asia-northeast1" : _settings.Region;
-                string apiUrl = $"https://{region}-aiplatform.googleapis.com/v1/publishers/google/models/{actualModelName}:generateContent?key={_settings.GoogleApiKey}";
+                // グローバルエンドポイントはリージョン接頭辞なしの専用ホスト名を使用
+                string region = string.IsNullOrWhiteSpace(_settings.Region) ? "global" : _settings.Region;
+                string apiUrl = region.Equals("global", StringComparison.OrdinalIgnoreCase)
+                    ? $"https://aiplatform.googleapis.com/v1/publishers/google/models/{actualModelName}:generateContent?key={_settings.GoogleApiKey}"
+                    : $"https://{region}-aiplatform.googleapis.com/v1/publishers/google/models/{actualModelName}:generateContent?key={_settings.GoogleApiKey}";
 
                 // リクエストボディを作成（Vertex AI APIの形式に合わせる）
                 // systemInstructionを使用して、翻訳結果のみを返すように指示
@@ -213,7 +200,15 @@ namespace GenericDeepL
                 {
                     // APIキーをエラーメッセージから除外
                     string safeUrl = apiUrl.Substring(0, apiUrl.IndexOf("?key=") + 6) + "***";
-                    return $"APIエラー: {response.StatusCode}\n\n使用したモデル: {actualModelName}\n使用したエンドポイント: {safeUrl}\n\nエラー詳細: {responseContent}";
+                    string errorMessage = $"APIエラー: {response.StatusCode}\n\n使用したモデル: {actualModelName}\n使用したエンドポイント: {safeUrl}\n\nエラー詳細: {responseContent}";
+
+                    // モデルが見つからない場合は設定変更を促すヒントを追加
+                    if (IsModelUnavailableError(response.StatusCode, responseContent))
+                    {
+                        errorMessage = $"モデル「{actualModelName}」は利用できないか、このリージョンでサポートされていない可能性があります。\n設定画面でモデル名を確認してください。\n\n{errorMessage}";
+                    }
+
+                    return errorMessage;
                 }
 
                 // レスポンスを処理
@@ -225,6 +220,26 @@ namespace GenericDeepL
             }
         }
 
+
+        private bool IsModelUnavailableError(System.Net.HttpStatusCode statusCode, string responseContent)
+        {
+            if (statusCode == System.Net.HttpStatusCode.NotFound)
+                return true;
+
+            try
+            {
+                var json = JObject.Parse(responseContent);
+                var status = json["error"]?["status"]?.ToString();
+                var message = json["error"]?["message"]?.ToString() ?? "";
+
+                if (status == "NOT_FOUND") return true;
+                if (status == "INVALID_ARGUMENT" &&
+                    message.IndexOf("model", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            }
+            catch (Exception) { }
+
+            return false;
+        }
 
         private string MapLegacyModelName(string modelName)
         {

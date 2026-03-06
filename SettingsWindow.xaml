@@ -28,7 +28,8 @@
 
         <Label Grid.Row="4" Content="Model:" FontWeight="Bold" Margin="0,0,0,10"/>
         
-        <ComboBox x:Name="ModelComboBox" Grid.Row="5" Margin="0,0,0,20"/>
+        <ComboBox x:Name="ModelComboBox" Grid.Row="5" Margin="0,0,0,20"
+                  IsEditable="True" IsTextSearchEnabled="False"/>
 
         <Label Grid.Row="6" Content="翻訳スタイル:" FontWeight="Bold" Margin="0,0,0,10"/>
         
