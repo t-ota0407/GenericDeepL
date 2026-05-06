@@ -13,11 +13,13 @@ namespace GenericDeepL
         private readonly TranslationService _translationService;
         private TaskbarIcon? _taskbarIcon;
         private bool _isExiting = false;
+        private bool _isInitializing = true;
 
         public MainWindow()
         {
-            InitializeComponent();
             _settings = Settings.Load();
+            InitializeComponent();
+            InitializeTargetLanguageSelection();
             // スタートアップが有効なのに未登録ならレジストリに登録（標準でスタートアップ有効のため）
             if (_settings.RunAtStartup && !StartupManager.IsRegistered())
             {
@@ -32,9 +34,7 @@ namespace GenericDeepL
 
             // グローバルホットキーを開始
             _hotKeyHook.Start();
-
-            // ウィンドウを非表示にする（システムトレイのみ表示）
-            this.Hide();
+            _isInitializing = false;
         }
 
         private void SetupTaskbarIcon()
@@ -85,6 +85,44 @@ namespace GenericDeepL
             this.Focus();
         }
 
+        private void InitializeTargetLanguageSelection()
+        {
+            switch (_settings.TargetLanguage)
+            {
+                case "英語":
+                    TargetEnglishButton.IsChecked = true;
+                    break;
+                case "日本語":
+                    TargetJapaneseButton.IsChecked = true;
+                    break;
+                default:
+                    TargetAutoButton.IsChecked = true;
+                    break;
+            }
+        }
+
+        private void TargetLanguage_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing) return;
+            if (sender == TargetEnglishButton)
+                _settings.TargetLanguage = "英語";
+            else if (sender == TargetJapaneseButton)
+                _settings.TargetLanguage = "日本語";
+            else
+                _settings.TargetLanguage = "自動";
+            _settings.Save();
+        }
+
+        private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            DragMove();
+        }
+
+        private void Window_StateChanged(object sender, EventArgs e)
+        {
+            // 最小化ボタンはタスクバーに格納（非表示にしない）
+        }
+
         private async void HotKeyHook_TripleCtrlC(object? sender, EventArgs e)
         {
             try
@@ -129,6 +167,34 @@ namespace GenericDeepL
                     TranslatingIndicator.Visibility = Visibility.Collapsed;
                     TranslationTextBox.Text = $"エラー: {ex.Message}";
                 });
+            }
+        }
+
+        private async void TranslateButton_Click(object sender, RoutedEventArgs e)
+        {
+            var text = OriginalTextBox.Text;
+            if (string.IsNullOrWhiteSpace(text) || text == "原文がここに表示されます...")
+                return;
+
+            try
+            {
+                TranslateButton.IsEnabled = false;
+                TranslationTextBox.Text = "";
+                TranslatingIndicator.Visibility = Visibility.Visible;
+
+                var translation = await _translationService.TranslateAsync(text);
+
+                TranslatingIndicator.Visibility = Visibility.Collapsed;
+                TranslationTextBox.Text = translation;
+            }
+            catch (Exception ex)
+            {
+                TranslatingIndicator.Visibility = Visibility.Collapsed;
+                TranslationTextBox.Text = $"エラー: {ex.Message}";
+            }
+            finally
+            {
+                TranslateButton.IsEnabled = true;
             }
         }
 

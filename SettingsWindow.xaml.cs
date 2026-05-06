@@ -6,6 +6,17 @@ namespace GenericDeepL
 {
     public partial class SettingsWindow : Window
     {
+        private void TitleBar_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            DragMove();
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            DialogResult = false;
+            Close();
+        }
+
         private readonly Settings _settings;
 
         public SettingsWindow(Settings settings)
@@ -80,7 +91,7 @@ namespace GenericDeepL
                 {
                     if (!StartupManager.Register())
                     {
-                        MessageBox.Show("Failed to register startup setting.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("スタートアップへの登録に失敗しました。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
                         _settings.RunAtStartup = false;
                     }
                 }
@@ -88,13 +99,13 @@ namespace GenericDeepL
                 {
                     if (!StartupManager.Unregister())
                     {
-                        MessageBox.Show("Failed to unregister startup setting.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("スタートアップの登録解除に失敗しました。", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
-            
+
             _settings.Save();
-            MessageBox.Show("Settings saved successfully.", "Settings", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show("設定を保存しました。", "設定", MessageBoxButton.OK, MessageBoxImage.Information);
             DialogResult = true;
             Close();
         }

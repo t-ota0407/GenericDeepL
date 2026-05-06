@@ -22,6 +22,7 @@ namespace GenericDeepL
         public string GoogleApiKey { get; set; } = string.Empty;
         public string ModelName { get; set; } = "";
         public string TranslationStyle { get; set; } = "標準";
+        public string TargetLanguage { get; set; } = "自動";
         public string Region { get; set; } = "";
         public bool RunAtStartup { get; set; } = true; // スタートアップ実行設定（標準で有効）
 

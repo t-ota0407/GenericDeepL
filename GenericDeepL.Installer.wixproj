@@ -5,6 +5,7 @@
     <AppBinPath Condition=" '$(AppBinPath)' == '' ">$(ProjectDir)..\bin\$(Configuration)\net6.0-windows\</AppBinPath>
     <!-- Pass AppBinPath to WiX preprocessor so $(var.AppBinPath) works in .wxs -->
     <DefineConstants>AppBinPath=$(AppBinPath)</DefineConstants>
+    <Cultures>ja-JP</Cultures>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="WixToolset.Util.wixext" Version="6.*" />

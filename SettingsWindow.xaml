@@ -1,51 +1,478 @@
 <Window x:Class="GenericDeepL.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Settings" Height="500" Width="500"
+        Title="設定" Height="480" Width="480"
         WindowStartupLocation="CenterScreen"
-        ResizeMode="NoResize">
-    <Grid Margin="20">
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        BorderThickness="1"
+        BorderBrush="#D0D0D0"
+        Background="White"
+        FontFamily="Segoe UI">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" GlassFrameThickness="-1" ResizeBorderThickness="0"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!-- アクセントボタン -->
+        <Style x:Key="AccentButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#0078D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="24,7"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#106EBE"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#005A9E"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- セカンダリボタン -->
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="24,7"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#D0D0D0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#F0F0F0"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#E0E0E0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 閉じるボタン -->
+        <Style x:Key="CloseButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="44"/>
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}">
+                            <TextBlock x:Name="Icon"
+                                       Text="✕"
+                                       FontSize="13"
+                                       Foreground="#666666"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#E81123"/>
+                                <Setter TargetName="Icon" Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#C42B1C"/>
+                                <Setter TargetName="Icon" Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- セクションラベル -->
+        <Style x:Key="SectionLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <!-- ComboBox -->
+        <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#1A1A1A"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border x:Name="Border"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="28"/>
+                                    </Grid.ColumnDefinitions>
+                                    <!-- ContentPresenter と Path は最背面（IsHitTestVisible=False） -->
+                                    <ContentPresenter x:Name="ContentSite"
+                                                      Grid.Column="0"
+                                                      IsHitTestVisible="False"
+                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      Margin="10,0,0,0"
+                                                      VerticalAlignment="Center"/>
+                                    <Path Grid.Column="1"
+                                          Data="M 0 0 L 5 5 L 10 0"
+                                          Stroke="#888888"
+                                          StrokeThickness="1.5"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          IsHitTestVisible="False"/>
+                                    <!-- ToggleButton は最前面でクリックを受け取る（明示的テンプレートで透明 Border を持たせる） -->
+                                    <ToggleButton Grid.Column="0" Grid.ColumnSpan="2"
+                                                  Focusable="False"
+                                                  OverridesDefaultStyle="True"
+                                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                  ClickMode="Press">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
+                                    <!-- 編集可能モード時は TextBox が ToggleButton より前面に来てテキスト入力を受け取る -->
+                                    <TextBox x:Name="PART_EditableTextBox"
+                                             Grid.Column="0"
+                                             Background="Transparent"
+                                             BorderThickness="0"
+                                             Margin="8,0,0,0"
+                                             Padding="0"
+                                             Visibility="Hidden"
+                                             IsReadOnly="{TemplateBinding IsReadOnly}"
+                                             VerticalAlignment="Center"
+                                             FontSize="13"
+                                             Foreground="#1A1A1A"
+                                             CaretBrush="#0078D4"/>
+                                </Grid>
+                            </Border>
+                            <Popup x:Name="Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Border x:Name="DropDown"
+                                        SnapsToDevicePixels="True"
+                                        MinWidth="{TemplateBinding ActualWidth}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                        Background="White"
+                                        BorderBrush="#D0D0D0"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Margin="0,2,0,0">
+                                    <ScrollViewer SnapsToDevicePixels="True">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEditable" Value="True">
+                                <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
+                                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#0078D4"/>
+                            </Trigger>
+                            <Trigger Property="IsDropDownOpen" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#0078D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Resources>
+                <Style TargetType="ComboBoxItem">
+                    <Setter Property="FontSize" Value="13"/>
+                    <Setter Property="Foreground" Value="#1A1A1A"/>
+                    <Setter Property="Padding" Value="10,8"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ComboBoxItem">
+                                <Border x:Name="ItemBorder"
+                                        Background="{TemplateBinding Background}"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsHighlighted" Value="True">
+                                        <Setter TargetName="ItemBorder" Property="Background" Value="#EBF3FB"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="ItemBorder" Property="Background" Value="#DDEEFF"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Style.Resources>
+        </Style>
+
+        <!-- RadioButton -->
+        <Style x:Key="ModernRadioButtonStyle" TargetType="RadioButton">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#1A1A1A"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="18"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Ellipse x:Name="Outer"
+                                     Grid.Column="0"
+                                     Width="16" Height="16"
+                                     Stroke="#B0B0B0"
+                                     StrokeThickness="1.5"
+                                     Fill="White"
+                                     VerticalAlignment="Center"/>
+                            <Ellipse x:Name="Inner"
+                                     Grid.Column="0"
+                                     Width="8" Height="8"
+                                     Fill="#0078D4"
+                                     VerticalAlignment="Center"
+                                     Visibility="Collapsed"/>
+                            <ContentPresenter Grid.Column="1"
+                                              Margin="8,0,0,0"
+                                              VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Outer" Property="Stroke" Value="#0078D4"/>
+                                <Setter TargetName="Inner" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Outer" Property="Stroke" Value="#0078D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- CheckBox -->
+        <Style x:Key="ModernCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#1A1A1A"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="18"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="Box"
+                                    Grid.Column="0"
+                                    Width="16" Height="16"
+                                    BorderBrush="#B0B0B0"
+                                    BorderThickness="1.5"
+                                    CornerRadius="3"
+                                    Background="White"
+                                    VerticalAlignment="Center">
+                                <Path x:Name="Check"
+                                      Data="M 2 7 L 6 11 L 13 3"
+                                      Stroke="White"
+                                      StrokeThickness="1.8"
+                                      Visibility="Collapsed"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                            </Border>
+                            <ContentPresenter Grid.Column="1"
+                                              Margin="8,0,0,0"
+                                              VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="#0078D4"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#0078D4"/>
+                                <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#0078D4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="44"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Label Grid.Row="0" Content="Google Vertex AI API Key:" FontWeight="Bold" Margin="0,0,0,10"/>
-        
-        <PasswordBox x:Name="ApiKeyPasswordBox" Grid.Row="1" Margin="0,0,0,20" PasswordChar="*"/>
+        <!-- タイトルバー -->
+        <Border Grid.Row="0"
+                Background="White"
+                BorderBrush="#E0E0E0"
+                BorderThickness="0,0,0,1"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="設定"
+                           FontSize="15"
+                           FontWeight="SemiBold"
+                           Foreground="#1A1A1A"
+                           VerticalAlignment="Center"
+                           Margin="16,0,0,0"/>
+                <Button Grid.Column="1"
+                        Style="{StaticResource CloseButtonStyle}"
+                        Click="CloseButton_Click"/>
+            </Grid>
+        </Border>
 
-        <Label Grid.Row="2" Content="Region:" FontWeight="Bold" Margin="0,0,0,10"/>
-        
-        <ComboBox x:Name="RegionComboBox" Grid.Row="3" Margin="0,0,0,20"/>
+        <!-- コンテンツ -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="24,20,24,12">
 
-        <Label Grid.Row="4" Content="Model:" FontWeight="Bold" Margin="0,0,0,10"/>
-        
-        <ComboBox x:Name="ModelComboBox" Grid.Row="5" Margin="0,0,0,20"
-                  IsEditable="True" IsTextSearchEnabled="False"/>
+                <!-- API キー -->
+                <TextBlock Text="Google Vertex AI API キー"
+                           Style="{StaticResource SectionLabelStyle}"/>
+                <Border BorderBrush="#E0E0E0"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Background="White"
+                        Margin="0,0,0,20">
+                    <Border.Triggers>
+                        <EventTrigger RoutedEvent="GotKeyboardFocus"/>
+                    </Border.Triggers>
+                    <PasswordBox x:Name="ApiKeyPasswordBox"
+                                 PasswordChar="●"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 Padding="10,9"
+                                 FontSize="13"
+                                 Foreground="#1A1A1A"/>
+                </Border>
 
-        <Label Grid.Row="6" Content="翻訳スタイル:" FontWeight="Bold" Margin="0,0,0,10"/>
-        
-        <StackPanel Grid.Row="7" Margin="0,0,0,20">
-            <RadioButton x:Name="StyleStandard" Content="標準" GroupName="TranslationStyle" Margin="0,5,0,0" IsChecked="True"/>
-            <RadioButton x:Name="StyleCasual" Content="カジュアル" GroupName="TranslationStyle" Margin="0,5,0,0"/>
-            <RadioButton x:Name="StyleFormal" Content="フォーマル" GroupName="TranslationStyle" Margin="0,5,0,0"/>
-            <RadioButton x:Name="StyleLiteral" Content="厳密な直訳" GroupName="TranslationStyle" Margin="0,5,0,0"/>
-            <RadioButton x:Name="StyleNatural" Content="自然さを優先した翻訳" GroupName="TranslationStyle" Margin="0,5,0,0"/>
-        </StackPanel>
+                <!-- リージョン -->
+                <TextBlock Text="リージョン"
+                           Style="{StaticResource SectionLabelStyle}"/>
+                <ComboBox x:Name="RegionComboBox"
+                          Style="{StaticResource ModernComboBoxStyle}"
+                          Margin="0,0,0,20"/>
 
-        <CheckBox x:Name="StartupCheckBox" Grid.Row="8" Content="Windows起動時に自動実行" Margin="0,0,0,20"/>
+                <!-- モデル -->
+                <TextBlock Text="モデル"
+                           Style="{StaticResource SectionLabelStyle}"/>
+                <ComboBox x:Name="ModelComboBox"
+                          Style="{StaticResource ModernComboBoxStyle}"
+                          IsEditable="True"
+                          IsTextSearchEnabled="False"
+                          Margin="0,0,0,20"/>
 
-        <StackPanel Grid.Row="9" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Save" Width="80" Height="30" Margin="0,0,10,0" Click="SaveButton_Click"/>
-            <Button Content="Cancel" Width="80" Height="30" Click="CancelButton_Click"/>
-        </StackPanel>
+                <!-- 翻訳スタイル -->
+                <TextBlock Text="翻訳スタイル"
+                           Style="{StaticResource SectionLabelStyle}"/>
+                <Border BorderBrush="#E8E8E8"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="14,12"
+                        Margin="0,0,0,20">
+                    <StackPanel>
+                        <RadioButton x:Name="StyleStandard"
+                                     Content="標準"
+                                     GroupName="TranslationStyle"
+                                     Style="{StaticResource ModernRadioButtonStyle}"
+                                     IsChecked="True"/>
+                        <RadioButton x:Name="StyleCasual"
+                                     Content="カジュアル"
+                                     GroupName="TranslationStyle"
+                                     Style="{StaticResource ModernRadioButtonStyle}"/>
+                        <RadioButton x:Name="StyleFormal"
+                                     Content="フォーマル"
+                                     GroupName="TranslationStyle"
+                                     Style="{StaticResource ModernRadioButtonStyle}"/>
+                        <RadioButton x:Name="StyleLiteral"
+                                     Content="厳密な直訳"
+                                     GroupName="TranslationStyle"
+                                     Style="{StaticResource ModernRadioButtonStyle}"/>
+                        <RadioButton x:Name="StyleNatural"
+                                     Content="自然さを優先した翻訳"
+                                     GroupName="TranslationStyle"
+                                     Style="{StaticResource ModernRadioButtonStyle}"
+                                     Margin="0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- スタートアップ -->
+                <CheckBox x:Name="StartupCheckBox"
+                          Content="Windows 起動時に自動実行"
+                          Style="{StaticResource ModernCheckBoxStyle}"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- フッター -->
+        <Border Grid.Row="2"
+                BorderBrush="#E0E0E0"
+                BorderThickness="0,1,0,0"
+                Background="#FAFAFA"
+                Padding="16,12">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="キャンセル"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Margin="0,0,8,0"
+                        Click="CancelButton_Click"/>
+                <Button Content="保存"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Click="SaveButton_Click"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

@@ -7,86 +7,347 @@
         mc:Ignorable="d"
         Title="GenericDeepL" Height="600" Width="1000"
         WindowStartupLocation="CenterScreen"
-        ShowInTaskbar="False">
+        ShowInTaskbar="True"
+        WindowStyle="None"
+        ResizeMode="CanResizeWithGrip"
+        BorderThickness="0"
+        Background="White"
+        FontFamily="Segoe UI"
+        StateChanged="Window_StateChanged">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="0" GlassFrameThickness="-1" ResizeBorderThickness="6"/>
+    </WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <!-- アクセントボタン -->
+        <Style x:Key="AccentButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#0078D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="24,7"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#106EBE"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#005A9E"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Border" Property="Background" Value="#C0C0C0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ツールバーのテキストボタン -->
+        <Style x:Key="ToolbarButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#E5E5E5"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#D0D0D0"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- 翻訳先セグメントボタン -->
+        <Style x:Key="SegmentButtonStyle" TargetType="RadioButton">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#555555"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Padding" Value="12,5"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#0078D4"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="False"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="#F0F0F0"/>
+                            </MultiTrigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="#106EBE"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- テキストエリア -->
+        <Style x:Key="PanelTextBoxStyle" TargetType="TextBox">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="AcceptsReturn" Value="True"/>
+            <Setter Property="Padding" Value="14"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#1A1A1A"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="VerticalContentAlignment" Value="Top"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="CaretBrush" Value="#0078D4"/>
+            <Setter Property="SelectionBrush" Value="#0078D4"/>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="44"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Menu Grid.Row="0">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Settings" Click="SettingsMenuItem_Click"/>
-                <Separator/>
-                <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
-            </MenuItem>
-        </Menu>
+        <!-- ツールバー -->
+        <Border Grid.Row="0"
+                Background="White"
+                BorderBrush="#E0E0E0"
+                BorderThickness="0,0,0,1"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
+                <!-- アプリ名 -->
+                <TextBlock Grid.Column="0"
+                           Text="GenericDeepL"
+                           FontSize="15"
+                           FontWeight="SemiBold"
+                           Foreground="#1A1A1A"
+                           VerticalAlignment="Center"
+                           Margin="16,0,0,0"/>
+
+                <!-- ツールバー右側ボタン -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="8,0">
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Click="SettingsMenuItem_Click"
+                            ToolTip="設定">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#x2699;" FontSize="14" Margin="0,0,4,0"/>
+                            <TextBlock Text="設定"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Click="ExitMenuItem_Click"
+                            Margin="2,0,4,0"
+                            ToolTip="終了">
+                        <TextBlock Text="終了"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- メインコンテンツ -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="1"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <!-- 左側：原文 -->
-            <Grid Grid.Column="0">
+            <Grid Grid.Column="0" Background="White">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="40"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
-                <Label Grid.Row="0" Content="原文" FontWeight="Bold" Padding="10,5" Background="#F0F0F0"/>
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <TextBox x:Name="OriginalTextBox" 
-                             TextWrapping="Wrap" 
-                             AcceptsReturn="True"
-                             IsReadOnly="True"
-                             Padding="10"
-                             VerticalContentAlignment="Top"
-                             HorizontalContentAlignment="Left"
+
+                <!-- パネルヘッダー -->
+                <Border Grid.Row="0"
+                        BorderBrush="#E8E8E8"
+                        BorderThickness="0,0,0,1">
+                    <TextBlock Text="原文"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="#555555"
+                               VerticalAlignment="Center"
+                               Margin="14,0"/>
+                </Border>
+
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <TextBox x:Name="OriginalTextBox"
+                             Style="{StaticResource PanelTextBoxStyle}"
                              Text="原文がここに表示されます..."/>
                 </ScrollViewer>
+
+                <!-- 翻訳ボタンエリア -->
+                <Border Grid.Row="2"
+                        BorderBrush="#E8E8E8"
+                        BorderThickness="0,1,0,0"
+                        Background="#FAFAFA"
+                        Padding="12,8">
+                    <Grid>
+                        <!-- 翻訳先セグメントコントロール -->
+                        <StackPanel Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    HorizontalAlignment="Left">
+                            <TextBlock Text="翻訳先"
+                                       FontSize="12"
+                                       Foreground="#555555"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                            <Border BorderBrush="#D0D0D0"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    ClipToBounds="True">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton x:Name="TargetAutoButton"
+                                                 Content="自動"
+                                                 GroupName="MainTargetLanguage"
+                                                 Style="{StaticResource SegmentButtonStyle}"
+                                                 IsChecked="True"
+                                                 Checked="TargetLanguage_Checked"/>
+                                    <Border Width="1" Background="#D0D0D0"/>
+                                    <RadioButton x:Name="TargetEnglishButton"
+                                                 Content="英語"
+                                                 GroupName="MainTargetLanguage"
+                                                 Style="{StaticResource SegmentButtonStyle}"
+                                                 Checked="TargetLanguage_Checked"/>
+                                    <Border Width="1" Background="#D0D0D0"/>
+                                    <RadioButton x:Name="TargetJapaneseButton"
+                                                 Content="日本語"
+                                                 GroupName="MainTargetLanguage"
+                                                 Style="{StaticResource SegmentButtonStyle}"
+                                                 Checked="TargetLanguage_Checked"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <Button x:Name="TranslateButton"
+                                Style="{StaticResource AccentButtonStyle}"
+                                Content="翻訳する"
+                                HorizontalAlignment="Right"
+                                Click="TranslateButton_Click"/>
+                    </Grid>
+                </Border>
             </Grid>
 
             <!-- 区切り線 -->
-            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="LightGray"/>
+            <GridSplitter Grid.Column="1"
+                          HorizontalAlignment="Stretch"
+                          Background="#E0E0E0"
+                          Cursor="SizeWE"/>
 
             <!-- 右側：翻訳結果 -->
-            <Grid Grid.Column="2">
+            <Grid Grid.Column="2" Background="White">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="40"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                
-                <!-- ラベルと翻訳中インジケーター -->
-                <Grid Grid.Row="0" Background="#F0F0F0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <Label Grid.Column="0" Content="翻訳結果" FontWeight="Bold" Padding="10,5"/>
-                    
-                    <!-- 翻訳中の表示 -->
-                    <TextBlock x:Name="TranslatingIndicator" 
-                               Grid.Column="2" 
-                               Text="翻訳中..." 
-                               VerticalAlignment="Center"
-                               Margin="0,0,10,0"
-                               FontWeight="SemiBold"
-                               Foreground="#0066CC"
-                               FontSize="12"
-                               Visibility="Collapsed"/>
-                </Grid>
-                
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <TextBox x:Name="TranslationTextBox" 
-                             TextWrapping="Wrap" 
-                             AcceptsReturn="True"
+
+                <!-- パネルヘッダー -->
+                <Border Grid.Row="0"
+                        BorderBrush="#E8E8E8"
+                        BorderThickness="0,0,0,1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0"
+                                   Text="翻訳結果"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="#555555"
+                                   VerticalAlignment="Center"
+                                   Margin="14,0"/>
+
+                        <!-- 翻訳中インジケーター -->
+                        <StackPanel Grid.Column="2"
+                                    x:Name="TranslatingIndicator"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center"
+                                    Margin="0,0,14,0"
+                                    Visibility="Collapsed">
+                            <Ellipse Width="7" Height="7"
+                                     Fill="#0078D4"
+                                     Margin="0,0,6,0">
+                                <Ellipse.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 From="1" To="0.2" Duration="0:0:0.7"
+                                                                 AutoReverse="True"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Ellipse.Triggers>
+                            </Ellipse>
+                            <TextBlock Text="翻訳中"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="#0078D4"
+                                       VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <TextBox x:Name="TranslationTextBox"
+                             Style="{StaticResource PanelTextBoxStyle}"
                              IsReadOnly="True"
-                             Padding="10"
-                             VerticalContentAlignment="Top"
-                             HorizontalContentAlignment="Left"
+                             Background="#FAFAFA"
                              Text="翻訳結果がここに表示されます..."/>
                 </ScrollViewer>
             </Grid>

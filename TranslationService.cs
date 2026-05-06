@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -129,16 +128,29 @@ namespace GenericDeepL
 
             try
             {
-                // 言語を検出
-                bool isJapanese = IsJapanese(text);
-                
+                // 翻訳先言語を決定
+                string targetLanguage = _settings.TargetLanguage ?? "自動";
+                bool translateToJapanese;
+                if (targetLanguage == "日本語")
+                {
+                    translateToJapanese = true;
+                }
+                else if (targetLanguage == "英語")
+                {
+                    translateToJapanese = false;
+                }
+                else
+                {
+                    // 自動：入力言語を検出して反対の言語に翻訳
+                    translateToJapanese = !IsJapanese(text);
+                }
+
                 // 翻訳スタイルに応じたプロンプトを生成
                 string styleInstruction = GetTranslationStyleInstruction(_settings.TranslationStyle);
-                
-                // プロンプト（systemInstructionで翻訳結果のみを返すように指示しているため、ここではシンプルに）
-                string prompt = isJapanese
-                    ? $"{styleInstruction}\n\n以下の文章を英語に翻訳してください：\n\n{text}"
-                    : $"{styleInstruction}\n\n以下の文章を日本語に翻訳してください：\n\n{text}";
+
+                string prompt = translateToJapanese
+                    ? $"{styleInstruction}\n\n以下の文章を日本語に翻訳してください：\n\n{text}"
+                    : $"{styleInstruction}\n\n以下の文章を英語に翻訳してください：\n\n{text}";
 
                 // モデル名を取得（デフォルトはgemini-2.5-flash-lite - 最も高速）
                 string modelName = string.IsNullOrWhiteSpace(_settings.ModelName) 
@@ -163,7 +175,7 @@ namespace GenericDeepL
 
                 // リクエストボディを作成（Vertex AI APIの形式に合わせる）
                 // systemInstructionを使用して、翻訳結果のみを返すように指示
-                string systemInstructionText = isJapanese
+                string systemInstructionText = translateToJapanese
                     ? "あなたは翻訳専門のAIです。翻訳結果のみを出力してください。説明、補足、コメント、プレフィックスは一切不要です。翻訳された文章だけをそのまま出力してください。"
                     : "You are a translation AI. Output only the translation result. No explanations, notes, comments, or prefixes. Output only the translated text.";
                 
@@ -329,9 +341,19 @@ namespace GenericDeepL
 
         private bool IsJapanese(string text)
         {
-            // 日本語文字（ひらがな、カタカナ、漢字）が含まれているかチェック
-            var japanesePattern = new Regex(@"[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]");
-            return japanesePattern.IsMatch(text);
+            // 日本語文字（ひらがな、カタカナ、漢字）の数をカウント
+            int japaneseCount = 0;
+            foreach (char c in text)
+            {
+                if ((c >= '\u3040' && c <= '\u309F') ||  // ひらがな
+                    (c >= '\u30A0' && c <= '\u30FF') ||  // カタカナ
+                    (c >= '\u4E00' && c <= '\u9FAF'))     // 漢字
+                {
+                    japaneseCount++;
+                }
+            }
+            // 3文字以上 かつ 全体の10%以上が日本語文字の場合に日本語と判定
+            return japaneseCount >= 3 && (double)japaneseCount / text.Length >= 0.10;
         }
     }
 }
