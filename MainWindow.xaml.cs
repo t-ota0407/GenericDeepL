@@ -39,9 +39,14 @@ namespace GenericDeepL
 
         private void SetupTaskbarIcon()
         {
+            var iconStream = Application.GetResourceStream(
+                new Uri("pack://application:,,,/assets/icon/GenericDeepL.ico"))?.Stream;
+
             _taskbarIcon = new TaskbarIcon
             {
-                Icon = System.Drawing.SystemIcons.Application,
+                Icon = iconStream != null
+                    ? new System.Drawing.Icon(iconStream)
+                    : System.Drawing.SystemIcons.Application,
                 ToolTipText = "GenericDeepL - Press Ctrl+C twice to translate",
                 Visibility = Visibility.Visible
             };
@@ -118,9 +123,14 @@ namespace GenericDeepL
             DragMove();
         }
 
+        private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.WindowState = WindowState.Minimized;
+        }
+
         private void Window_StateChanged(object sender, EventArgs e)
         {
-            // 最小化ボタンはタスクバーに格納（非表示にしない）
+            // 最小化時はタスクバーに格納（非表示にしない）
         }
 
         private async void HotKeyHook_TripleCtrlC(object? sender, EventArgs e)

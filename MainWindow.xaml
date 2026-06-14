@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:GenericDeepL"
         mc:Ignorable="d"
         Title="GenericDeepL" Height="600" Width="1000"
+        Icon="assets/icon/GenericDeepL.ico"
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="True"
         WindowStyle="None"
@@ -179,6 +180,12 @@
                             <TextBlock Text="&#x2699;" FontSize="14" Margin="0,0,4,0"/>
                             <TextBlock Text="設定"/>
                         </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource ToolbarButtonStyle}"
+                            Click="MinimizeButton_Click"
+                            Margin="2,0,0,0"
+                            ToolTip="最小化">
+                        <TextBlock Text="最小化"/>
                     </Button>
                     <Button Style="{StaticResource ToolbarButtonStyle}"
                             Click="ExitMenuItem_Click"

@@ -4,6 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>assets\icon\GenericDeepL.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +15,10 @@
 
   <ItemGroup>
     <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="assets\icon\GenericDeepL.ico"/>
   </ItemGroup>
 
   <ItemGroup>
