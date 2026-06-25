@@ -8,7 +8,9 @@
       "PowerShell(dotnet build *)",
       "Bash(git check-ignore *)",
       "Bash(echo \"check-ignore exit: $?\")",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
