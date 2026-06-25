@@ -10,14 +10,15 @@
         WindowStartupLocation="CenterScreen"
         ShowInTaskbar="True"
         WindowStyle="None"
+        AllowsTransparency="True"
         ResizeMode="CanResizeWithGrip"
         BorderThickness="0"
-        Background="White"
+        Background="Transparent"
         FontFamily="Segoe UI"
         StateChanged="Window_StateChanged">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="0" GlassFrameThickness="-1" ResizeBorderThickness="6"/>
+        <WindowChrome CaptionHeight="0" GlassFrameThickness="0" ResizeBorderThickness="6"/>
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
@@ -143,11 +144,22 @@
         </Style>
     </Window.Resources>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="44"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <Grid x:Name="RootGrid" Background="Transparent">
+        <Grid.RenderTransform>
+            <ScaleTransform x:Name="RootScale" ScaleX="1" ScaleY="1"/>
+        </Grid.RenderTransform>
+        <!-- 白い面とドロップシャドウ。シャドウ描画用に Margin で余白を確保する -->
+        <Border x:Name="ShadowBorder" Margin="12" CornerRadius="8" Background="White">
+            <Border.Effect>
+                <DropShadowEffect x:Name="WindowShadow" Color="#000000" BlurRadius="12" ShadowDepth="0" Opacity="0.3"/>
+            </Border.Effect>
+            <Grid>
+                <!-- コンテンツ本体。角丸にクリップするため SizeChanged で Clip を更新する -->
+                <Grid x:Name="ContentRoot" SizeChanged="ContentRoot_SizeChanged">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="44"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
         <!-- ツールバー -->
         <Border Grid.Row="0"
@@ -359,5 +371,14 @@
                 </ScrollViewer>
             </Grid>
         </Grid>
+                </Grid>
+                <!-- 境界を分かりやすくする細い枠線（角丸）。操作を妨げないよう当たり判定なし -->
+                <Border x:Name="BorderOverlay"
+                        CornerRadius="8"
+                        BorderBrush="#E0E0E0"
+                        BorderThickness="1"
+                        IsHitTestVisible="False"/>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
