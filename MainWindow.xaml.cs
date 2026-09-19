@@ -5,6 +5,8 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using System.Threading;
+using System.Threading.Tasks;
 using Hardcodet.Wpf.TaskbarNotification;
 using System.Drawing;
 
@@ -18,6 +20,13 @@ namespace GenericDeepL
         private TaskbarIcon? _taskbarIcon;
         private bool _isExiting = false;
         private bool _isInitializing = true;
+        // クリップボード監視の一時停止。パスワード等をコピーする前に手動で止めるための機能。
+        // 一時的な措置なので設定には保存せず、起動時は常に監視ON。
+        private bool _isMonitoringPaused = false;
+        private System.Windows.Controls.MenuItem? _pauseMenuItem;
+        // 実行中の翻訳。新しい要求が来たら古い方をキャンセルする。
+        // 生成・参照・破棄はすべてUIスレッド上で行われるため排他は不要。
+        private CancellationTokenSource? _translationCts;
         // 最小化アニメーション中に WindowState を変更する際の再入を防ぐフラグ
         private bool _isMinimizing = false;
         // 吸い込み時に縮小しきったときのスケール（0 は描画が破綻するため極小値にする）
@@ -39,14 +48,10 @@ namespace GenericDeepL
             _settings = Settings.Load();
             InitializeComponent();
             InitializeTargetLanguageSelection();
-            // スタートアップが有効なのに未登録ならレジストリに登録（標準でスタートアップ有効のため）
-            if (_settings.RunAtStartup && !StartupManager.IsRegistered())
-            {
-                StartupManager.Register();
-            }
+            // スタートアップ登録の同期・修復は App.Application_Startup で済んでいるためここでは行わない
             _translationService = new TranslationService(_settings);
             _hotKeyHook = new GlobalHotKeyHook();
-            _hotKeyHook.TripleCtrlC += HotKeyHook_TripleCtrlC;
+            _hotKeyHook.DoubleCtrlC += HotKeyHook_DoubleCtrlC;
 
             // システムトレイアイコンを設定
             SetupTaskbarIcon();
@@ -66,31 +71,43 @@ namespace GenericDeepL
                 Icon = iconStream != null
                     ? new System.Drawing.Icon(iconStream)
                     : System.Drawing.SystemIcons.Application,
-                ToolTipText = "GenericDeepL - Press Ctrl+C twice to translate",
                 Visibility = Visibility.Visible
             };
+            UpdateTrayToolTip();
 
             var contextMenu = new System.Windows.Controls.ContextMenu();
-            
+
             var showMenuItem = new System.Windows.Controls.MenuItem
             {
-                Header = "Show Window"
+                Header = "ウィンドウを表示"
             };
             showMenuItem.Click += (s, e) => ShowWindow();
             contextMenu.Items.Add(showMenuItem);
 
             var settingsMenuItem = new System.Windows.Controls.MenuItem
             {
-                Header = "Settings"
+                Header = "設定"
             };
             settingsMenuItem.Click += SettingsMenuItem_Click;
             contextMenu.Items.Add(settingsMenuItem);
 
             contextMenu.Items.Add(new System.Windows.Controls.Separator());
 
+            // クリップボードの内容は外部（Google）へ送信されるため、一時的に止められるようにする
+            _pauseMenuItem = new System.Windows.Controls.MenuItem
+            {
+                Header = "クリップボード監視を一時停止",
+                IsCheckable = true,
+                IsChecked = _isMonitoringPaused
+            };
+            _pauseMenuItem.Click += PauseMenuItem_Click;
+            contextMenu.Items.Add(_pauseMenuItem);
+
+            contextMenu.Items.Add(new System.Windows.Controls.Separator());
+
             var exitMenuItem = new System.Windows.Controls.MenuItem
             {
-                Header = "Exit"
+                Header = "終了"
             };
             exitMenuItem.Click += ExitMenuItem_Click;
             contextMenu.Items.Add(exitMenuItem);
@@ -99,7 +116,29 @@ namespace GenericDeepL
             _taskbarIcon.TrayMouseDoubleClick += (s, e) => ShowWindow();
         }
 
-        private void ShowWindow()
+        private void PauseMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            _isMonitoringPaused = _pauseMenuItem?.IsChecked == true;
+            UpdateTrayToolTip();
+        }
+
+        /// <summary>
+        /// トレイアイコンのツールチップを現在の状態に合わせて更新する。
+        /// </summary>
+        private void UpdateTrayToolTip()
+        {
+            if (_taskbarIcon == null)
+            {
+                return;
+            }
+
+            _taskbarIcon.ToolTipText = _isMonitoringPaused
+                ? "GenericDeepL - クリップボード監視を一時停止中"
+                : "GenericDeepL - Ctrl+C を素早く2回で翻訳";
+        }
+
+        /// <summary>ウィンドウを表示して前面に出す。2つ目のインスタンス起動時にも呼ばれる。</summary>
+        public void ShowWindow()
         {
             this.Show();
             this.WindowState = WindowState.Normal;
@@ -323,51 +362,130 @@ namespace GenericDeepL
                 _currentCornerRadius, _currentCornerRadius);
         }
 
-        private async void HotKeyHook_TripleCtrlC(object? sender, EventArgs e)
+        private async void HotKeyHook_DoubleCtrlC(object? sender, EventArgs e)
         {
             try
             {
-                // クリップボードからテキストを取得
-                string? clipboardText = null;
-                Dispatcher.Invoke(() =>
+                // 一時停止中はクリップボードに触れず、外部へも一切送信しない
+                if (_isMonitoringPaused)
                 {
-                    if (System.Windows.Clipboard.ContainsText())
-                    {
-                        clipboardText = System.Windows.Clipboard.GetText();
-                    }
-                });
+                    return;
+                }
 
+                var clipboardText = TryGetClipboardText();
                 if (string.IsNullOrWhiteSpace(clipboardText))
                 {
                     return;
                 }
 
-                // ウィンドウを表示して最前面に
-                Dispatcher.Invoke(() =>
-                {
-                    ShowWindow();
-                    OriginalTextBox.Text = clipboardText;
-                    TranslationTextBox.Text = "";
-                    TranslatingIndicator.Visibility = Visibility.Visible;
-                });
-
-                // 翻訳を実行
-                var translation = await _translationService.TranslateAsync(clipboardText);
-
-                Dispatcher.Invoke(() =>
-                {
-                    TranslatingIndicator.Visibility = Visibility.Collapsed;
-                    TranslationTextBox.Text = translation;
-                });
+                ShowWindow();
+                OriginalTextBox.Text = clipboardText;
+                await RunTranslationAsync(clipboardText);
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() =>
+                TranslatingIndicator.Visibility = Visibility.Collapsed;
+                TranslationTextBox.Text = $"エラー: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// クリップボードからテキストを取得する。取得できない場合は null。
+        /// </summary>
+        /// <remarks>
+        /// クリップボードは他プロセスにロックされることがあり、その間の取得は例外になる。
+        /// 短い間隔で数回リトライする。
+        /// </remarks>
+        private static string? TryGetClipboardText()
+        {
+            const int maxAttempts = 3;
+            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                try
+                {
+                    return System.Windows.Clipboard.ContainsText()
+                        ? System.Windows.Clipboard.GetText()
+                        : null;
+                }
+                catch (Exception)
+                {
+                    if (attempt == maxAttempts - 1)
+                    {
+                        return null;
+                    }
+                    System.Threading.Thread.Sleep(50);
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 翻訳を実行して結果を表示する。外部送信の前に文字数のしきい値チェックを行う。
+        /// </summary>
+        private async Task RunTranslationAsync(string text)
+        {
+            // クリップボードの内容は外部（Google）へ送信される。想定外に長い文章を
+            // 気づかず送ってしまわないよう、しきい値を超えたときだけ確認をはさむ。
+            if (text.Length > _settings.ConfirmThresholdLength && !ConfirmLargeTextSend(text.Length))
+            {
+                TranslationTextBox.Text = "送信をキャンセルしました。";
+                return;
+            }
+
+            // 直前の翻訳がまだ走っていればキャンセルする。連続で実行したときに、
+            // 古い要求の結果が後から返ってきて新しい結果を上書きするのを防ぐ。
+            _translationCts?.Cancel();
+
+            var cts = new CancellationTokenSource();
+            _translationCts = cts;
+
+            try
+            {
+                TranslateButton.IsEnabled = false;
+                TranslationTextBox.Text = "";
+                TranslatingIndicator.Visibility = Visibility.Visible;
+
+                var translation = await _translationService.TranslateAsync(text, cts.Token);
+
+                TranslationTextBox.Text = translation;
+            }
+            catch (OperationCanceledException)
+            {
+                // より新しい翻訳要求に差し替えられた。表示はそちらが行うので何もしない。
+            }
+            catch (Exception ex)
+            {
+                TranslationTextBox.Text = $"エラー: {ex.Message}";
+            }
+            finally
+            {
+                // 自分が最新の要求のときだけUIを元に戻す。
+                // 古い要求が新しい要求の進行中表示を消してしまわないようにするため。
+                if (ReferenceEquals(_translationCts, cts))
                 {
                     TranslatingIndicator.Visibility = Visibility.Collapsed;
-                    TranslationTextBox.Text = $"エラー: {ex.Message}";
-                });
+                    TranslateButton.IsEnabled = true;
+                    _translationCts = null;
+                }
+                cts.Dispose();
             }
+        }
+
+        /// <summary>
+        /// しきい値を超える長さのテキストを送信してよいかユーザーに確認する。
+        /// </summary>
+        private bool ConfirmLargeTextSend(int length)
+        {
+            var answer = MessageBox.Show(
+                $"文字数がしきい値を超えています。このまま Google へ送信して翻訳しますか？{Environment.NewLine}{Environment.NewLine}" +
+                $"文字数　: {length:N0}{Environment.NewLine}" +
+                $"しきい値: {_settings.ConfirmThresholdLength:N0}{Environment.NewLine}{Environment.NewLine}" +
+                "しきい値は設定画面から変更できます。",
+                "送信の確認",
+                MessageBoxButton.OKCancel,
+                MessageBoxImage.Question);
+
+            return answer == MessageBoxResult.OK;
         }
 
         private async void TranslateButton_Click(object sender, RoutedEventArgs e)
@@ -376,26 +494,7 @@ namespace GenericDeepL
             if (string.IsNullOrWhiteSpace(text) || text == "原文がここに表示されます...")
                 return;
 
-            try
-            {
-                TranslateButton.IsEnabled = false;
-                TranslationTextBox.Text = "";
-                TranslatingIndicator.Visibility = Visibility.Visible;
-
-                var translation = await _translationService.TranslateAsync(text);
-
-                TranslatingIndicator.Visibility = Visibility.Collapsed;
-                TranslationTextBox.Text = translation;
-            }
-            catch (Exception ex)
-            {
-                TranslatingIndicator.Visibility = Visibility.Collapsed;
-                TranslationTextBox.Text = $"エラー: {ex.Message}";
-            }
-            finally
-            {
-                TranslateButton.IsEnabled = true;
-            }
+            await RunTranslationAsync(text);
         }
 
         private void SettingsMenuItem_Click(object sender, RoutedEventArgs e)

@@ -28,57 +28,48 @@ namespace GenericDeepL
             // リージョン・モデル一覧の反映と SelectionChanged の購読は Loaded で行う
             Loaded += SettingsWindow_Loaded;
             
-            // 翻訳スタイル選択を設定
-            switch (_settings.TranslationStyle)
-            {
-                case "標準":
-                    StyleStandard.IsChecked = true;
-                    break;
-                case "カジュアル":
-                    StyleCasual.IsChecked = true;
-                    break;
-                case "フォーマル":
-                    StyleFormal.IsChecked = true;
-                    break;
-                case "厳密な直訳":
-                    StyleLiteral.IsChecked = true;
-                    break;
-                case "自然さを優先した翻訳":
-                    StyleNatural.IsChecked = true;
-                    break;
-                default:
-                    StyleStandard.IsChecked = true;
-                    break;
-            }
-            
+            // 送信制御の設定を反映
+            ConfirmThresholdTextBox.Text = _settings.ConfirmThresholdLength.ToString();
+            ConfirmThresholdHintText.Text =
+                $"{Settings.MinConfirmThresholdLength:N0} 〜 {Settings.MaxConfirmThresholdLength:N0} の範囲で指定（既定 {Settings.DefaultConfirmThresholdLength:N0}）。超えた場合は送信するかどうかを都度確認します。";
+
             // スタートアップ設定を反映
             StartupCheckBox.IsChecked = _settings.RunAtStartup;
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
-            _settings.GoogleApiKey = ApiKeyPasswordBox.Password;
-            
-            // 選択または入力されたモデルを取得
-            _settings.ModelName = ModelComboBox.Text?.Trim() ?? "";
-            
-            // 選択されたリージョンを取得
-            if (RegionComboBox.SelectedItem is System.Windows.Controls.ComboBoxItem selectedRegionItem)
+            // 先に入力値を検証する。不正なら何も保存せず画面に留まる
+            if (!int.TryParse(ConfirmThresholdTextBox.Text?.Trim(), out var threshold) ||
+                threshold < Settings.MinConfirmThresholdLength ||
+                threshold > Settings.MaxConfirmThresholdLength)
             {
-                _settings.Region = selectedRegionItem.Tag?.ToString() ?? TranslationService.GetDefaultRegion();
+                MessageBox.Show(
+                    $"確認なしで送信する文字数は {Settings.MinConfirmThresholdLength:N0} 〜 {Settings.MaxConfirmThresholdLength:N0} の整数で入力してください。",
+                    "入力エラー",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                ConfirmThresholdTextBox.Focus();
+                ConfirmThresholdTextBox.SelectAll();
+                return;
             }
-            
-            // 選択された翻訳スタイルを取得
-            if (StyleStandard.IsChecked == true)
-                _settings.TranslationStyle = "標準";
-            else if (StyleCasual.IsChecked == true)
-                _settings.TranslationStyle = "カジュアル";
-            else if (StyleFormal.IsChecked == true)
-                _settings.TranslationStyle = "フォーマル";
-            else if (StyleLiteral.IsChecked == true)
-                _settings.TranslationStyle = "厳密な直訳";
-            else if (StyleNatural.IsChecked == true)
-                _settings.TranslationStyle = "自然さを優先した翻訳";
+
+            // モデルは一覧から選ぶ方式のため、未選択のまま保存させない
+            if (ModelComboBox.SelectedItem is not string selectedModel || string.IsNullOrWhiteSpace(selectedModel))
+            {
+                MessageBox.Show(
+                    "モデルを選択してください。",
+                    "入力エラー",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                ModelComboBox.Focus();
+                return;
+            }
+
+            _settings.GoogleApiKey = ApiKeyPasswordBox.Password;
+            _settings.ConfirmThresholdLength = threshold;
+            _settings.ModelName = selectedModel;
+
             
             // スタートアップ設定を保存
             bool previousStartupSetting = _settings.RunAtStartup;
@@ -120,72 +111,16 @@ namespace GenericDeepL
         {
             Loaded -= SettingsWindow_Loaded;
 
-            // region-models.json に準拠してリージョン選択肢を構築
-            RegionComboBox.Items.Clear();
-            var regionIds = TranslationService.GetRegionIds();
-            var defaultRegion = TranslationService.GetDefaultRegion();
-            var savedRegion = string.IsNullOrEmpty(_settings.Region) ? defaultRegion : _settings.Region;
-            int regionSelectIndex = 0;
-            for (int i = 0; i < regionIds.Length; i++)
-            {
-                var item = new ComboBoxItem
-                {
-                    Content = GetRegionDisplayName(regionIds[i]),
-                    Tag = regionIds[i]
-                };
-                RegionComboBox.Items.Add(item);
-                if (string.Equals(regionIds[i], savedRegion, StringComparison.OrdinalIgnoreCase))
-                    regionSelectIndex = i;
-            }
-            if (RegionComboBox.Items.Count > 0)
-                RegionComboBox.SelectedIndex = regionSelectIndex;
-
-            RegionComboBox.SelectionChanged += RegionComboBox_SelectionChanged;
-            RefreshModelsForSelectedRegion();
-            ModelComboBox.Text = _settings.ModelName;
-        }
-
-        private static string GetRegionDisplayName(string regionId)
-        {
-            return regionId switch
-            {
-                "global"         => "global (グローバル)",
-                "us-central1"    => "us-central1 (アイオワ)",
-                "us-east5"       => "us-east5 (コロンバス)",
-                "asia-northeast1" => "asia-northeast1 (東京)",
-                "asia-southeast1" => "asia-southeast1 (シンガポール)",
-                "europe-west4"   => "europe-west4 (オランダ)",
-                "europe-west9"   => "europe-west9 (パリ)",
-                _ => regionId
-            };
-        }
-
-        private void RegionComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            RefreshModelsForSelectedRegion();
-        }
-
-        private string GetSelectedRegion()
-        {
-            if (RegionComboBox.SelectedItem is ComboBoxItem selectedRegionItem)
-                return selectedRegionItem.Tag?.ToString() ?? TranslationService.GetDefaultRegion();
-            return TranslationService.GetDefaultRegion();
-        }
-
-        private void RefreshModelsForSelectedRegion()
-        {
-            string region = GetSelectedRegion();
-            string previouslySelected = ModelComboBox.Text;
-            string[] models = TranslationService.GetModelsForRegion(region);
-
+            // models.json に定義されたモデルだけを選択肢にする（自由入力は不可）
             ModelComboBox.Items.Clear();
-            foreach (var model in models)
+            foreach (var model in TranslationService.GetAvailableModels())
                 ModelComboBox.Items.Add(model);
 
-            ModelComboBox.Text = !string.IsNullOrEmpty(previouslySelected)
-                ? previouslySelected
-                : (models.Length > 0 ? models[0] : "");
+            // 保存済みのモデルが一覧に無い場合（古い設定を引き継いだ場合など）は既定を選ぶ
+            if (!string.IsNullOrEmpty(_settings.ModelName) && ModelComboBox.Items.Contains(_settings.ModelName))
+                ModelComboBox.SelectedItem = _settings.ModelName;
+            else
+                ModelComboBox.SelectedItem = TranslationService.GetDefaultModel();
         }
-
     }
 }

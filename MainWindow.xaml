@@ -195,15 +195,9 @@
                     </Button>
                     <Button Style="{StaticResource ToolbarButtonStyle}"
                             Click="MinimizeButton_Click"
-                            Margin="2,0,0,0"
+                            Margin="2,0,4,0"
                             ToolTip="最小化">
                         <TextBlock Text="最小化"/>
-                    </Button>
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Click="ExitMenuItem_Click"
-                            Margin="2,0,4,0"
-                            ToolTip="終了">
-                        <TextBlock Text="終了"/>
                     </Button>
                 </StackPanel>
             </Grid>

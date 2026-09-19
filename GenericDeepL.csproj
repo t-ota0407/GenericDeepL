@@ -5,6 +5,13 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>assets\icon\GenericDeepL.ico</ApplicationIcon>
+    <!-- コード中で使っている `?` 注釈を正規に有効化する（警告 CS8632 の解消）。
+         null フロー解析の警告までは有効にしないため既存コードへの影響はない。 -->
+    <Nullable>annotations</Nullable>
+    <!-- MSI はフレームワーク依存構成で配布しており .NET ランタイムを同梱しない。
+         .NET 6 は EOL のため、6.0 が無く 8.0 以降のみの PC でも起動できるようにロールフォワードを許可する。
+         （6.0 があればそちらが優先され、無い場合のみ利用可能な最も低い上位メジャーが使われる） -->
+    <RollForward>Major</RollForward>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="region-models.json">
+    <None Update="models.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -9,8 +9,20 @@ namespace GenericDeepL
 {
     public class GlobalHotKeyHook : IDisposable
     {
+        /// <summary>翻訳を発火させるのに必要な Ctrl+C の連続押下回数。
+        /// 変更した場合は docs/使い方.md・CLAUDE.md・トレイのツールチップも合わせること。</summary>
+        private const int RequiredPressCount = 2;
+
+        /// <summary>連続押下とみなす、前回の Ctrl+C からの最大間隔。</summary>
+        private static readonly TimeSpan PressInterval = TimeSpan.FromSeconds(1);
+
+        /// <summary>キーのチャタリングやソフトウェアによる多重入力を無視する最小間隔。
+        /// 人間の素早い2連打でも 80ms 程度はあくため、これより短い間隔は同一押下の重複とみなす。</summary>
+        private static readonly TimeSpan MinPressInterval = TimeSpan.FromMilliseconds(40);
+
         private const int WH_KEYBOARD_LL = 13;
         private const int WM_KEYDOWN = 0x0100;
+        private const int WM_KEYUP = 0x0101;
         private const int VK_CONTROL = 0x11;
         private const int VK_C = 0x43;
 
@@ -18,9 +30,13 @@ namespace GenericDeepL
         private IntPtr _hookID = IntPtr.Zero;
         private DateTime _lastKeyPress = DateTime.MinValue;
         private int _keyPressCount = 0;
+        // C キーが現在押し下げられているか。オートリピート判定に使う
+        private bool _isCKeyDown = false;
+        // C キーの直近の押し下げ時刻（押下回数に数えたかどうかに関わらず記録する）
+        private DateTime _lastCKeyDown = DateTime.MinValue;
         private readonly DispatcherTimer _resetTimer;
 
-        public event EventHandler? TripleCtrlC;
+        public event EventHandler? DoubleCtrlC;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
@@ -45,7 +61,7 @@ namespace GenericDeepL
             _proc = HookCallback;
             _resetTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(1)
+                Interval = PressInterval
             };
             _resetTimer.Tick += (s, e) =>
             {
@@ -80,48 +96,97 @@ namespace GenericDeepL
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            if (nCode >= 0 && wParam == (IntPtr)WM_KEYDOWN)
+            if (nCode >= 0)
             {
-                int vkCode = Marshal.ReadInt32(lParam);
-
-                // Ctrlキーが押されているかチェック
-                bool ctrlPressed = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
-
-                if (ctrlPressed && vkCode == VK_C)
+                int message = (int)wParam;
+                if (message == WM_KEYDOWN || message == WM_KEYUP)
                 {
-                    var now = DateTime.Now;
-                    var timeSinceLastPress = (now - _lastKeyPress).TotalSeconds;
-
-                    if (timeSinceLastPress < 1.0)
+                    int vkCode = Marshal.ReadInt32(lParam);
+                    if (vkCode == VK_C)
                     {
-                        _keyPressCount++;
-                        if (_keyPressCount >= 2)
+                        if (message == WM_KEYUP)
                         {
-                            _keyPressCount = 0;
-                            _resetTimer.Stop();
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                TripleCtrlC?.Invoke(this, EventArgs.Empty);
-                            });
+                            // キーが離された。次の WM_KEYDOWN は新しい押下として数える
+                            _isCKeyDown = false;
                         }
                         else
                         {
-                            _resetTimer.Stop();
-                            _resetTimer.Start();
+                            HandleCKeyDown();
                         }
                     }
-                    else
-                    {
-                        _keyPressCount = 1;
-                        _resetTimer.Stop();
-                        _resetTimer.Start();
-                    }
-
-                    _lastKeyPress = now;
                 }
             }
 
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
+        }
+
+        /// <summary>
+        /// C キーの押し下げを処理し、Ctrl+C の連続押下回数を数える。
+        /// </summary>
+        private void HandleCKeyDown()
+        {
+            var now = DateTime.Now;
+
+            // キーを押しっぱなしにしたときのオートリピートは、間に WM_KEYUP が入らない。
+            // これを 1 回の押下として扱い、勝手に翻訳が走るのを防ぐ。
+            // 何らかの理由で WM_KEYUP を取りこぼしてもホットキーが死んだままにならないよう、
+            // 前回の押し下げから PressInterval 以上あいていれば新しい押下として復帰させる。
+            // （オートリピートの間隔は Windows の設定でも最長 400ms 程度のため誤判定しない）
+            bool isAutoRepeat = _isCKeyDown && (now - _lastCKeyDown) < PressInterval;
+            _isCKeyDown = true;
+            _lastCKeyDown = now;
+            if (isAutoRepeat)
+            {
+                return;
+            }
+
+            // Ctrlキーが押されているかチェック
+            bool ctrlPressed = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+            if (!ctrlPressed)
+            {
+                return;
+            }
+
+            var timeSinceLastPress = now - _lastKeyPress;
+
+            // チャタリング等による多重入力は 1 回の押下として扱う
+            if (timeSinceLastPress < MinPressInterval)
+            {
+                return;
+            }
+
+            if (timeSinceLastPress < PressInterval)
+            {
+                _keyPressCount++;
+                if (_keyPressCount >= RequiredPressCount)
+                {
+                    _keyPressCount = 0;
+                    _resetTimer.Stop();
+
+                    // 低レベルフックのコールバックは、フックを登録したスレッド（UIスレッド）上で
+                    // 同期的に呼び出される。ここで Invoke するとウィンドウ表示やクリップボード読み取りが
+                    // 終わるまでフックが返らず、LowLevelHooksTimeout（既定 300ms）を超えると
+                    // Windows にフックを解除されてホットキーが反応しなくなる。
+                    // さらに、その間はシステム全体のキー入力がブロックされる。
+                    // そのため BeginInvoke でディスパッチャのキューに積むだけにして、
+                    // ただちに CallNextHookEx まで抜ける。
+                    Application.Current?.Dispatcher.BeginInvoke(
+                        new Action(() => DoubleCtrlC?.Invoke(this, EventArgs.Empty)));
+                }
+                else
+                {
+                    _resetTimer.Stop();
+                    _resetTimer.Start();
+                }
+            }
+            else
+            {
+                _keyPressCount = 1;
+                _resetTimer.Stop();
+                _resetTimer.Start();
+            }
+
+            _lastKeyPress = now;
         }
 
         public void Dispose()

@@ -1,9 +1,11 @@
-# GenericDeepL MSI installer build script (WiX Toolset 6 / WixToolset.Sdk)
-# Usage: .\build-msi.ps1 [-Configuration Release|Debug]
+﻿# GenericDeepL MSI installer build script (WiX Toolset 6 / WixToolset.Sdk)
+# Usage: .\build-msi.ps1 [-Configuration Release|Debug] [-Clean]
+#   -Clean : ビルド前に dotnet clean を実行する（ソース変更後はこちらを推奨）
 # Requires: .NET SDK (for dotnet build). WiX SDK is restored via NuGet.
 
 param(
-    [string]$Configuration = "Release"
+    [string]$Configuration = "Release",
+    [switch]$Clean
 )
 
 $ErrorActionPreference = "Stop"
@@ -15,6 +17,16 @@ $ProjectDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $AppProjectPath = Join-Path $ProjectDir "GenericDeepL.csproj"
 $WixProjectPath = Join-Path $ProjectDir "GenericDeepL.Installer.wixproj"
 $AppBinPath = Join-Path $ProjectDir "bin\$Configuration\net6.0-windows"
+
+# 0. Clean (optional)
+if ($Clean) {
+    Write-Host "`n0. Cleaning previous build output..." -ForegroundColor Yellow
+    $null = dotnet clean "$AppProjectPath" -c $Configuration
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "dotnet clean failed." -ForegroundColor Red
+        exit 1
+    }
+}
 
 # 1. Build application (publish でデプロイ用出力を生成し、MSI に含めるファイルを確実に揃える)
 # ※ 出力フォルダは削除せず publish で上書き。exe 等が起動中の場合は事前に終了すること。

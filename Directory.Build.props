@@ -1,0 +1,23 @@
+<Project>
+
+  <!--
+    GenericDeepL.csproj と GenericDeepL.Installer.wixproj が同じディレクトリにあるため、
+    既定のままだと両方が obj\ を共有してしまう。
+    project.assets.json と project.nuget.cache はプロジェクト名を含まないので互いに上書きし合い、
+    MSI をビルドした直後は assets が WiX 用（native）に置き換わる。その状態で
+    dotnet clean GenericDeepL.csproj を実行すると NETSDK1005 で失敗する。
+
+    対策として wixproj だけ中間出力先をずらす。
+    csproj 側は既定の obj\ のままにしておくこと。WPF は内部で一時プロジェクト
+    （GenericDeepL_xxxxxxxx_wpftmp.csproj）を生成してビルドしており、
+    プロジェクト名に依存した中間出力先を与えると一時プロジェクトとの間でパスがずれ、
+    obj 配下の生成済み AssemblyInfo.cs がソースとして拾われて CS0579（属性の重複）になる。
+
+    ※ この設定は NuGet の復元にも効く必要がある。Directory.Build.props は SDK の props より
+       前に読み込まれるためここに置いている（プロジェクトの PropertyGroup では間に合わない）。
+  -->
+  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.wixproj'">
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\installer\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+
+</Project>

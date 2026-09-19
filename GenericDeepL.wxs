@@ -35,8 +35,8 @@
                 Source="$(var.AppBinPath)GenericDeepL.runtimeconfig.json" />
           <File Id="GenericDeepL.deps.json"
                 Source="$(var.AppBinPath)GenericDeepL.deps.json" />
-          <File Id="region_models.json"
-                Source="$(var.AppBinPath)region-models.json" />
+          <File Id="models.json"
+                Source="$(var.AppBinPath)models.json" />
         </Component>
         <Component Id="StartupRunKey" Guid="d3e4f5a6-b7c8-9012-def0-123456789012" Condition="RUNATSTARTUP">
           <RegistryValue Root="HKCU"
@@ -85,7 +85,19 @@
       <Publish Dialog="StartupOptionDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="1" />
       <Publish Dialog="StartupOptionDlg" Control="Cancel" Event="EndDialog" Value="Exit" Condition="1" />
     </UI>
-    <Launch Condition="Installed OR (VersionNT &gt;= 603)" Message="このアプリケーションは Windows 10 以降が必要です。" />
+    <!-- Windows 10 以降の判定。VersionNT は Windows 8.1 以降どのバージョンでも 603 を返すため
+         「Windows 10 以降」の判定には使えない。CurrentMajorVersionNumber は Windows 10 で
+         追加された値で 8.1 以前には存在しないため、その有無で判定する。 -->
+    <Property Id="WINDOWS10ORLATER">
+      <RegistrySearch Id="SearchWindows10OrLater"
+                      Root="HKLM"
+                      Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+                      Name="CurrentMajorVersionNumber"
+                      Type="raw" />
+    </Property>
+
+    <Launch Condition="Installed OR WINDOWS10ORLATER"
+            Message="このアプリケーションは Windows 10 以降が必要です。" />
     <Icon Id="ApplicationIcon" SourceFile="$(var.AppBinPath)GenericDeepL.exe" />
     <Property Id="ARPPRODUCTICON" Value="ApplicationIcon" />
     <Property Id="RUNATSTARTUP" Value="1" />

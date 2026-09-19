@@ -250,51 +250,6 @@
             </Style.Resources>
         </Style>
 
-        <!-- RadioButton -->
-        <Style x:Key="ModernRadioButtonStyle" TargetType="RadioButton">
-            <Setter Property="FontSize" Value="13"/>
-            <Setter Property="Foreground" Value="#1A1A1A"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Margin" Value="0,0,0,6"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RadioButton">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="18"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Ellipse x:Name="Outer"
-                                     Grid.Column="0"
-                                     Width="16" Height="16"
-                                     Stroke="#B0B0B0"
-                                     StrokeThickness="1.5"
-                                     Fill="White"
-                                     VerticalAlignment="Center"/>
-                            <Ellipse x:Name="Inner"
-                                     Grid.Column="0"
-                                     Width="8" Height="8"
-                                     Fill="#0078D4"
-                                     VerticalAlignment="Center"
-                                     Visibility="Collapsed"/>
-                            <ContentPresenter Grid.Column="1"
-                                              Margin="8,0,0,0"
-                                              VerticalAlignment="Center"/>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Outer" Property="Stroke" Value="#0078D4"/>
-                                <Setter TargetName="Inner" Property="Visibility" Value="Visible"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Outer" Property="Stroke" Value="#0078D4"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <!-- CheckBox -->
         <Style x:Key="ModernCheckBoxStyle" TargetType="CheckBox">
             <Setter Property="FontSize" Value="13"/>
@@ -401,24 +356,15 @@
                                  Foreground="#1A1A1A"/>
                 </Border>
 
-                <!-- リージョン -->
-                <TextBlock Text="リージョン"
-                           Style="{StaticResource SectionLabelStyle}"/>
-                <ComboBox x:Name="RegionComboBox"
-                          Style="{StaticResource ModernComboBoxStyle}"
-                          Margin="0,0,0,20"/>
-
                 <!-- モデル -->
                 <TextBlock Text="モデル"
                            Style="{StaticResource SectionLabelStyle}"/>
                 <ComboBox x:Name="ModelComboBox"
                           Style="{StaticResource ModernComboBoxStyle}"
-                          IsEditable="True"
-                          IsTextSearchEnabled="False"
                           Margin="0,0,0,20"/>
 
-                <!-- 翻訳スタイル -->
-                <TextBlock Text="翻訳スタイル"
+                <!-- プライバシー / 送信制御 -->
+                <TextBlock Text="クリップボードの送信"
                            Style="{StaticResource SectionLabelStyle}"/>
                 <Border BorderBrush="#E8E8E8"
                         BorderThickness="1"
@@ -426,28 +372,34 @@
                         Padding="14,12"
                         Margin="0,0,0,20">
                     <StackPanel>
-                        <RadioButton x:Name="StyleStandard"
-                                     Content="標準"
-                                     GroupName="TranslationStyle"
-                                     Style="{StaticResource ModernRadioButtonStyle}"
-                                     IsChecked="True"/>
-                        <RadioButton x:Name="StyleCasual"
-                                     Content="カジュアル"
-                                     GroupName="TranslationStyle"
-                                     Style="{StaticResource ModernRadioButtonStyle}"/>
-                        <RadioButton x:Name="StyleFormal"
-                                     Content="フォーマル"
-                                     GroupName="TranslationStyle"
-                                     Style="{StaticResource ModernRadioButtonStyle}"/>
-                        <RadioButton x:Name="StyleLiteral"
-                                     Content="厳密な直訳"
-                                     GroupName="TranslationStyle"
-                                     Style="{StaticResource ModernRadioButtonStyle}"/>
-                        <RadioButton x:Name="StyleNatural"
-                                     Content="自然さを優先した翻訳"
-                                     GroupName="TranslationStyle"
-                                     Style="{StaticResource ModernRadioButtonStyle}"
-                                     Margin="0"/>
+                        <TextBlock Text="翻訳した文章は Google に送信されます。長い文章を気づかず送ってしまわないよう、下の文字数を超える場合は送信前に確認します。"
+                                   FontSize="12"
+                                   Foreground="#777777"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="確認なしで送信する文字数"
+                                   FontSize="12"
+                                   Foreground="#555555"
+                                   Margin="0,0,0,4"/>
+                        <Border BorderBrush="#E0E0E0"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Background="White"
+                                HorizontalAlignment="Left"
+                                Width="140"
+                                Margin="0,0,0,4">
+                            <TextBox x:Name="ConfirmThresholdTextBox"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     Padding="10,7"
+                                     FontSize="13"
+                                     Foreground="#1A1A1A"/>
+                        </Border>
+                        <TextBlock x:Name="ConfirmThresholdHintText"
+                                   FontSize="11"
+                                   Foreground="#999999"
+                                   TextWrapping="Wrap"
+                                   Margin="0"/>
                     </StackPanel>
                 </Border>
 
