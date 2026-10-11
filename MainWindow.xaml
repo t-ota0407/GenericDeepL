@@ -330,20 +330,32 @@
                                     VerticalAlignment="Center"
                                     Margin="0,0,14,0"
                                     Visibility="Collapsed">
+                            <!-- 点滅は表示中だけ動かす。Loaded は非表示のままでも起動時に発火するため、
+                                 Loaded で開始すると起動から終了まで回り続け、影付きの透過ウィンドウ全体が
+                                 毎フレーム再描画されて GPU/CPU を常時消費していた -->
                             <Ellipse Width="7" Height="7"
                                      Fill="#0078D4"
                                      Margin="0,0,6,0">
-                                <Ellipse.Triggers>
-                                    <EventTrigger RoutedEvent="Loaded">
-                                        <BeginStoryboard>
-                                            <Storyboard RepeatBehavior="Forever">
-                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                                                 From="1" To="0.2" Duration="0:0:0.7"
-                                                                 AutoReverse="True"/>
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </EventTrigger>
-                                </Ellipse.Triggers>
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Style.Triggers>
+                                            <Trigger Property="IsVisible" Value="True">
+                                                <Trigger.EnterActions>
+                                                    <BeginStoryboard x:Name="PulseStoryboard">
+                                                        <Storyboard RepeatBehavior="Forever" Timeline.DesiredFrameRate="30">
+                                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                             From="1" To="0.2" Duration="0:0:0.7"
+                                                                             AutoReverse="True"/>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </Trigger.EnterActions>
+                                                <Trigger.ExitActions>
+                                                    <RemoveStoryboard BeginStoryboardName="PulseStoryboard"/>
+                                                </Trigger.ExitActions>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
                             </Ellipse>
                             <TextBlock Text="翻訳中"
                                        FontSize="12"
